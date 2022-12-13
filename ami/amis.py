@@ -42,10 +42,10 @@ ec2 = boto3.client('ec2')
 all_instances = ec2.describe_instances(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
 instances_list = []
 
-
+# Double loop as describe_instances is paginated
 for instance in all_instances['Reservations']:
     for i in instance['Instances']:
-
+        
         # Get the instance name tag
         instance = [tag['Value'] for tag in i['Tags'] if tag['Key'] == 'Name']
         if not instance:

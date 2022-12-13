@@ -23,29 +23,29 @@ This script gets all EBS volumes and displays the output in a table as shown bel
 '''
 
 my_parser = argparse.ArgumentParser(description='All EBS volumes')
-
-my_parser.add_argument('--csv',
-                       help='Save output to CSV',
-                       action='store_true')
-
+my_parser.add_argument('--csv', help='Save output to CSV', action='store_true')
+my_parser.add_argument('--state',help='Filter output by volume state.', action='store', dest='state')
+my_parser.add_argument('--type',help='Filter output by volume type.', action='store', dest='type')
+my_parser.add_argument('--size',help='Filter output by volume size.', type=int, action='store', dest='size')
+conditionals = my_parser.add_mutually_exclusive_group()
+conditionals.add_argument('--lt', help='Less than given size.', action='store_true')
+conditionals.add_argument('--gt', help='Greater than given size.', action='store_true')
 args = my_parser.parse_args()
 
-table = Table(title="All EBS volumes")
-table.add_column("ID")
-table.add_column("Name")
-table.add_column("Owner")
-table.add_column("State")
-table.add_column("Type")
-table.add_column("Size")
-
+table = Table(title='All EBS volumes')
+table.add_column('ID')
+table.add_column('Name')
+table.add_column('Owner')
+table.add_column('State')
+table.add_column('Type')
+table.add_column('Size (GB)')
 
 ec2 = boto3.resource('ec2', region_name='eu-west-1')
+
 volumes = ec2.volumes.all()
-#volumes = ec2.volumes.filter(Filters=[{'Name': 'state', 'Values': ['available']},])
 out = [volume for volume in volumes]
 ebs_list = []
 
-dtformat = datetime.now().strftime("%Y%m%d%H%M")
 
 for volume in out:
     name = ''
@@ -54,38 +54,50 @@ for volume in out:
     if  volume.tags:
 
         for tag in volume.tags:
-            if tag['Key'] == "Name" or tag['Key'] == "name":
+            if tag['Key'] == 'Name' or tag['Key'] == 'name':
                 name = tag['Value']
                 
         for tag in volume.tags:
-            if tag['Key'] == "Owner" or tag['Key'] == "owner":
+            if tag['Key'] == 'Owner' or tag['Key'] == 'owner':
                 owner = tag['Value']
             
     i = {
-        "ID" : volume.id,
-        "Name" : name,
-        "Owner" : owner,
-        "State": volume.state,
-        "Type" : volume.volume_type,
-        "Size" : volume.size
+        'ID' : volume.id,
+        'Name' : name,
+        'Owner' : owner,
+        'State': volume.state,
+        'Type' : volume.volume_type,
+        'Size' : volume.size
     }
     ebs_list.append(i)
 
+
+if args.state:
+    ebs_list = [vol for vol in ebs_list if vol['State'] == args.state]
+
+if args.type:
+    ebs_list = [vol for vol in ebs_list if vol['Type'] == args.type]
+
+if args.gt:
+    ebs_list = [vol for vol in ebs_list if vol['Size'] > args.size]
+
+if args.lt:
+    ebs_list = [vol for vol in ebs_list if vol['Size'] < args.size]
+
+
+
 keys = set().union(*(d.keys() for d in ebs_list))
 
-for d in ebs_list:
-    table.add_row(str(d["ID"]), str(d["Name"]), str(d["Owner"]), str(d["State"]), str(d["Type"]), str(d["Size"]))
+if args.csv:
+    dtformat = datetime.now().strftime("%Y%m%d%H%M")
 
-
-
-if args.csv is None:
-    console = Console()
-    console.print(table)
-else:
     with open(f'allebs_{dtformat}.csv', 'w', newline='') as output_file:
         dict_writer = csv.DictWriter(output_file, keys)
         dict_writer.writeheader()
         dict_writer.writerows(ebs_list)
         print('Output saved in CSV file.')
-
-
+else:
+    for d in ebs_list:
+        table.add_row(str(d['ID']), str(d['Name']), str(d['Owner']), str(d['State']), str(d['Type']), str(d['Size']))
+    console = Console()
+    console.print(table)
