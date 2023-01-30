@@ -14,26 +14,24 @@ for snapshot in out:
     name = ''
     owner = ''
 
-    if  snapshot.tags:
+    if snapshot.tags:
 
         for tag in snapshot.tags:
             if tag['Key'] == "Name" or tag['Key'] == "name":
                 name = tag['Value']
-                
+
         for tag in snapshot.tags:
             if tag['Key'] == "Owner" or tag['Key'] == "owner":
                 owner = tag['Value']
-            
+
     i = {
-
-        "ID" : snapshot.id,
-        "Name" : name,
-        "Owner" : owner,
+        "ID": snapshot.id,
+        "Name": name,
+        "Owner": owner,
         "State": snapshot.state,
-        "Type" : snapshot.volume_id,
-        "Size" : snapshot.volume_size,
-        "StorageTier" : snapshot.storage_tier
-
+        "Type": snapshot.volume_id,
+        "Size": snapshot.volume_size,
+        "StorageTier": snapshot.storage_tier
     }
     result.append(i)
 
@@ -43,4 +41,3 @@ with open(f'allsnapshot_{dtformat}.csv', 'w', newline='') as output_file:
     dict_writer = csv.DictWriter(output_file, keys)
     dict_writer.writeheader()
     dict_writer.writerows(result)
-

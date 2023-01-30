@@ -19,16 +19,16 @@ for instance in ec2_list:
     for tag in instance['Tags']:
         if tag['Key'] == "Name" or tag['Key'] == "name":
             name = tag['Value']
-            
+
     for tag in instance['Tags']:
         if tag['Key'] == "Owner" or tag['Key'] == "owner":
             owner = tag['Value']
-            
+
     i = {
-        "Owner" : owner,
-        "Name" : name,
-        "InstanceType" : instance['InstanceType'],
-        "InstanceId" : instance['InstanceId'],
+        "Owner": owner,
+        "Name": name,
+        "InstanceType": instance['InstanceType'],
+        "InstanceId": instance['InstanceId'],
         "State": instance['State']['Name'],
     }
     ec2_output.append(i)
