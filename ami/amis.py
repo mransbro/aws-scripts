@@ -9,16 +9,17 @@ from re import match
 '''
 This script gets the ami of all running ec2 instances and displays the output in a table as shown below.
 
-                                                            AMIs in use                                                             
-┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━┓
-┃ Instance                                                        ┃ AMI ID                ┃ AMI Name                          ┃ Env              ┃
-┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━┩
-│ i-0b3996078be13cfd7                                             │ ami-0b1c217770f6cd7ca │ amazon-eks-node-1.21-v20210813    │ not_set          │
-│ i-0bd549090e4666430                                             │ ami-0b1c217770f6cd7ca │ amazon-eks-node-1.21-v20210813    │ not_set          │
-│ i-038577fd01031f081                                             │ ami-0b1c217770f6cd7ca │ amazon-eks-node-1.21-v20210813    │ not_set          │
-│ internal.msm.gb.prod1-backoffice.agg.backoffice-mongodb1.2      │ ami-0ebe54b8bd248439c │ amzn2-base-0.0.18                 │ prod1-backoffice │
-│ internal.msm.gb.inf1.services.ms-teams-bot                      │ ami-00d9ca85f82c14c39 │ amzn2-base-0.0.20                 │ inf1             │
+                                                            AMIs in use                                      
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
+┃ Instance                                        ┃ AMI ID                ┃ AMI Name                       ┃ Env       ┃
+┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
+│ i-0b3996078be13cfd7                             │ ami-0b1c217770f6cd7ca │ amazon-eks-node-1.21-v20210813 │ not_set   │
+│ i-0bd549090e4666430                             │ ami-0b1c217770f6cd7ca │ amazon-eks-node-1.21-v20210813 │ not_set   │
+│ i-038577fd01031f081                             │ ami-0b1c217770f6cd7ca │ amazon-eks-node-1.21-v20210813 │ not_set   │
+│ internal.msm.gb.prod1-backoffice.agg.mongodb1.2 │ ami-0ebe54b8bd248439c │ amzn2-base-0.0.18              │ prod1-back│
+│ internal.msm.gb.inf1.services.ms-teams-bot      │ ami-00d9ca85f82c14c39 │ amzn2-base-0.0.20              │ inf1      │
 '''
+
 
 def main():
     my_parser = argparse.ArgumentParser(description='All AMIs')
@@ -46,12 +47,12 @@ def main():
     # Double loop as describe_instances is paginated
     for instance in all_instances['Reservations']:
         for i in instance['Instances']:
-            
+
             # Get the instance name tag
             instance = [tag['Value'] for tag in i['Tags'] if tag['Key'] == 'Name']
             if not instance:
                 instance = i['InstanceId']
-            else: 
+            else:
                 instance = instance[0]
 
             # Get the instance env tag
@@ -60,11 +61,10 @@ def main():
                 env = 'not_set'
             else:
                 env = env[0]
-            
+
             ami_image = i['ImageId']
 
             instances_list.append({'instance': instance, 'ami_image': ami_image, 'env': env})
-
 
     unique_amis = list(set([item['ami_image'] for item in instances_list]))
     unique_ami_info = ec2.describe_images(ImageIds=unique_amis)
@@ -93,7 +93,6 @@ def main():
     if args.env:
         instances_list = [ami for ami in instances_list if ami['env'] == args.env]
 
-
     keys = set().union(*(d.keys() for d in instances_list))
 
     if args.csv:
@@ -109,6 +108,7 @@ def main():
             table.add_row(d['instance'], d['ami_image'], d['ami_name'], d['env'])
         console = Console()
         console.print(table)
+
 
 if __name__ == '__main__':
     main()

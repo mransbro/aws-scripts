@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import boto3
-import sys
 import time
 import csv
 import argparse
@@ -19,7 +18,7 @@ args = parser.parse_args()
 timestr = time.strftime("%Y%m%d%H%M%s")
 filename = f"s3_lifecycle_{timestr}.csv"
 results = []
-fields = ['Bucket','Lifecycle']
+fields = ['Bucket', 'Lifecycle']
 
 print('Checking buckets...')
 
@@ -29,8 +28,8 @@ for bucket in s3.buckets.all():
     except:
         rules = 'No Policy'
     if args.csv is None:
-        print(f"{bucket.name}, {rules}")    
-    else: 
+        print(f"{bucket.name}, {rules}")
+    else:
         results.append([bucket.name, rules])
 
 if args.csv is None:
