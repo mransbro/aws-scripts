@@ -1,4 +1,5 @@
 import boto3
+from botocore.exceptions import ClientError
 import csv
 from datetime import datetime
 from rich.console import Console
@@ -14,10 +15,10 @@ This script gets all EBS volumes and displays the output in a table as shown bel
 ┡━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━╇━━━━━━━━━━━╇━━━━━━━━━━╇━━━━━━┩
 │ vol-653ad4aa          │ internal.msn.eu.prod1.ack.ack-config.2.data       │            │ available │ standard │ 10   │
 │ vol-713ad4be          │ internal.msn.eu.prod1.ack.ack-config.3.data       │            │ available │ standard │ 10   │
-│ vol-0d12e1c2          │ internal.msn.eu.prod1.services.service-pool1-glu… │            │ available │ gp2      │ 200  │
+│ vol-0d12e1c2          │ internal.msn.eu.prod1.service.service-pool1-glu… │            │ available │ gp2      │ 200  │
 │ vol-064799214cc69ad68 │ internal.msn.eu.inf1.inf.artifactory-ha.3.cache   │            │ in-use    │ gp2      │ 500  │
-│ vol-051748c5444cf2276 │ internal.msn.eu.prod1-backoffice.ack.backoffice-… │            │ in-use    │ gp2      │ 10   │
-│ vol-0d869f827340771ac │ internal.msn.eu.prod1-backoffice.ack.backoffice-… │            │ in-use    │ gp2      │ 40   │
+│ vol-051748c5444cf2276 │ internal.msn.eu.prod1-backoffice.ack.backoffice… │            │ in-use    │ gp2      │ 10   │
+│ vol-0d869f827340771ac │ internal.msn.eu.prod1-backoffice.ack.backoffice… │            │ in-use    │ gp2      │ 40   │
 │ vol-00c9881fe9484d1e2 │ internal.msn.eu.sit1.ack.ack-config-db.2.data     │            │ available │ gp2      │ 40   │
 │ vol-01db27527a5327c8e │ internal.msn.eu.sit1.ack.ack-config-db.2.log      │            │ available │ gp2      │ 10   │
 '''
@@ -44,7 +45,12 @@ def main():
 
     ec2 = boto3.resource('ec2', region_name='eu-west-1')
 
-    volumes = ec2.volumes.all()
+    try:
+        volumes = ec2.volumes.all()
+    except ClientError as e:
+        print(e['Error']['Message'])
+        exit()
+
     out = [volume for volume in volumes]
     ebs_list = []
 
