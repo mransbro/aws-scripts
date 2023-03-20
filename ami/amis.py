@@ -1,4 +1,5 @@
 import boto3
+from botocore.exceptions import ClientError
 import csv
 from datetime import datetime
 from rich.console import Console
@@ -9,7 +10,7 @@ from re import match
 '''
 This script gets the ami of all running ec2 instances and displays the output in a table as shown below.
 
-                                                            AMIs in use                                      
+                                                            AMIs in use
 ┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━┓
 ┃ Instance                                        ┃ AMI ID                ┃ AMI Name                       ┃ Env       ┃
 ┡━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━╇━━━━━━━━━━━┩
@@ -34,14 +35,18 @@ def main():
     args = my_parser.parse_args()
 
     table = Table(title="AMIs in use")
-    table.add_column("Instance")
-    table.add_column("AMI ID")
-    table.add_column("AMI Name")
-    table.add_column("Env")
+    table.add_column("Instance", style="cyan")
+    table.add_column("AMI ID", style="magenta")
+    table.add_column("AMI Name", style="green")
+    table.add_column("Env", style="red")
 
     ec2 = boto3.client('ec2')
+    try:
+        all_instances = ec2.describe_instances(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
+    except ClientError as e:
+        print(e['Error']['Message'])
+        exit()
 
-    all_instances = ec2.describe_instances(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
     instances_list = []
 
     # Double loop as describe_instances is paginated
@@ -58,7 +63,7 @@ def main():
             # Get the instance env tag
             env = [tag['Value'] for tag in i['Tags'] if tag['Key'] == 'env']
             if not env:
-                env = 'not_set'
+                env = 'NOT_SET'
             else:
                 env = env[0]
 
@@ -67,14 +72,15 @@ def main():
             instances_list.append({'instance': instance, 'ami_image': ami_image, 'env': env})
 
     unique_amis = list(set([item['ami_image'] for item in instances_list]))
-    unique_ami_info = ec2.describe_images(ImageIds=unique_amis)
+    unique_ami_info = ec2.describe_images(ImageIds=unique_amis)['Images']
 
     # Add the ami name
-    for d in instances_list:
-        for item in unique_ami_info['Images']:
-            if item['ImageId'] == d['ami_image']:
-                ami_name = item['Name']
-        d['ami_name'] = ami_name
+    for instance in instances_list:
+        ami_name = "NOT_SET"
+        for ami in unique_ami_info:
+            if ami['ImageId'] == instance['ami_image']:
+                ami_name = ami['Name']
+        instance['ami_name'] = ami_name
 
     # Filter output
     if args.id:
