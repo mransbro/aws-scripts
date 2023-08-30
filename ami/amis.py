@@ -44,7 +44,7 @@ def main():
     try:
         all_instances = ec2.describe_instances(Filters=[{'Name': 'instance-state-name', 'Values': ['running']}])
     except ClientError as e:
-        print(e['Error']['Message'])
+        print(e.response['Error']['Message'])
         exit()
 
     instances_list = []

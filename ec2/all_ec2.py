@@ -21,6 +21,7 @@ def main():
     for instance in ec2_list:
         name = ''
         owner = ''
+        env = ''
 
         for tag in instance['Tags']:
             if tag['Key'] == "Name" or tag['Key'] == "name":
@@ -30,9 +31,14 @@ def main():
             if tag['Key'] == "Owner" or tag['Key'] == "owner":
                 owner = tag['Value']
 
+        for tag in instance['Tags']:
+            if tag['Key'] == 'env' or tag['Key'] == "Env":
+                env = tag['Value']
+
         i = {
             "Owner": owner,
             "Name": name,
+            "Env": env,
             "InstanceType": instance['InstanceType'],
             "InstanceId": instance['InstanceId'],
             "State": instance['State']['Name'],

@@ -3,15 +3,15 @@ from botocore.exceptions import ClientError
 import csv
 from datetime import datetime
 
+
 def main():
     ec2 = boto3.resource('ec2', region_name='eu-west-1')
 
     try:
         snapshots = ec2.snapshots.all()
     except ClientError as e:
-        print(e['Error']['Message'])
+        print(e.response['Error']['Message'])
         exit()
-
 
     out = [snapshot for snapshot in snapshots]
     result = []
@@ -49,6 +49,7 @@ def main():
         dict_writer = csv.DictWriter(output_file, keys)
         dict_writer.writeheader()
         dict_writer.writerows(result)
+
 
 if __name__ == '__main__':
     main()
