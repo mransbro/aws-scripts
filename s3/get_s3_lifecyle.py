@@ -6,6 +6,7 @@ import time
 import csv
 import argparse
 
+
 def main():
 
     s3 = boto3.resource('s3')
@@ -19,7 +20,7 @@ def main():
     try:
         buckets = s3.buckets.all()
     except ClientError as e:
-        print(e['Error']['Message'])
+        print(e.response['Error']['Message'])
         exit()
 
     timestr = time.strftime("%Y%m%d%H%M%s")
@@ -44,6 +45,7 @@ def main():
             write = csv.writer(f)
             write.writerow(fields)
             write.writerows(results)
+
 
 if __name__ == '__main__':
     main()
